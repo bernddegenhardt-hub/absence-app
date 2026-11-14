@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrieren – Nachbarschaft</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <h1>Registrieren</h1>
+    <p class="lead">Erstelle dein Konto, um deine Abwesenheiten mit deinen Nachbarn zu teilen.</p>
+
+    <form id="register-form" novalidate>
+      <fieldset>
+        <legend>Persönliche Daten</legend>
+        <div class="row">
+          <label>Vorname
+            <input name="first_name" autocomplete="given-name" required maxlength="60">
+            <small class="error" data-for="first_name"></small>
+          </label>
+          <label>Nachname
+            <input name="last_name" autocomplete="family-name" required maxlength="60">
+            <small class="error" data-for="last_name"></small>
+          </label>
+        </div>
+        <label>Geburtstag <span class="optional">(optional)</span>
+          <input name="birthday" type="date" autocomplete="bday">
+          <small class="error" data-for="birthday"></small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Kontakt</legend>
+        <label>E-Mail-Adresse
+          <input name="email" type="email" autocomplete="email" required>
+          <small class="error" data-for="email"></small>
+        </label>
+        <label>Mobile Telefonnummer
+          <input name="mobile_phone" type="tel" autocomplete="tel" placeholder="0171 1234567" required>
+          <small class="error" data-for="mobile_phone"></small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Adresse</legend>
+        <div class="row">
+          <label class="grow">Straße
+            <input name="address.street" autocomplete="address-line1" required>
+            <small class="error" data-for="address.street"></small>
+          </label>
+          <label class="narrow">Hausnr.
+            <input name="address.house_number" required maxlength="10">
+            <small class="error" data-for="address.house_number"></small>
+          </label>
+        </div>
+        <div class="row">
+          <label class="narrow">PLZ
+            <input name="address.postal_code" autocomplete="postal-code" inputmode="numeric" pattern="\d{5}" maxlength="5" required>
+            <small class="error" data-for="address.postal_code"></small>
+          </label>
+          <label class="grow">Ort
+            <input name="address.city" autocomplete="address-level2" required>
+            <small class="error" data-for="address.city"></small>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Zugang</legend>
+        <label>Passwort
+          <input name="password" type="password" autocomplete="new-password" minlength="8" required>
+          <small class="hint">Mindestens 8 Zeichen, mit Buchstaben und Ziffern.</small>
+          <small class="error" data-for="password"></small>
+        </label>
+        <label>Passwort wiederholen
+          <input name="password_confirm" type="password" autocomplete="new-password" required>
+          <small class="error" data-for="password_confirm"></small>
+        </label>
+      </fieldset>
+
+      <div id="form-message" role="alert"></div>
+      <button type="submit">Konto erstellen</button>
+    </form>
+  </main>
+  <script src="register.js"></script>
+</body>
+</html>

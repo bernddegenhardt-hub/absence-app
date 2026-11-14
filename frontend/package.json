@@ -1,0 +1,15 @@
+{
+  "name": "nachbarschaft-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web-Frontend der Nachbarschafts-App (Abwesenheiten)",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
