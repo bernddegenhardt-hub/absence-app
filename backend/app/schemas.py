@@ -7,10 +7,10 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 _NAME_RE = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿĀ-žẞß' .-]+$")
 
 
-def normalize_mobile(raw: str) -> str:
-    """Normalisiert eine Mobilnummer ins E.164-Format (+49...).
+def normalize_phone(raw: str) -> str:
+    """Normalisiert eine Telefonnummer ins E.164-Format (+49...).
 
-    Akzeptiert z. B. '0171 1234567', '+49 (171) 123-4567', '0049171...'.
+    Akzeptiert z. B. '0171 1234567', '+49 (171) 123-4567', '0049171...', '030 123456'.
     """
     s = re.sub(r"[\s\-/().]", "", raw.strip())
     if s.startswith("00"):
@@ -18,6 +18,15 @@ def normalize_mobile(raw: str) -> str:
     elif s.startswith("0"):
         s = "+49" + s[1:]  # nationale deutsche Nummer
     if not re.fullmatch(r"\+[1-9]\d{6,14}", s):
+        raise ValueError("Ungültige Telefonnummer")
+    return s
+
+
+def normalize_mobile(raw: str) -> str:
+    """Wie normalize_phone, verlangt bei deutschen Nummern aber eine Mobilnummer."""
+    try:
+        s = normalize_phone(raw)
+    except ValueError:
         raise ValueError("Ungültige Mobilnummer")
     if s.startswith("+49") and not re.match(r"\+491[5-7]\d", s):
         raise ValueError("Keine deutsche Mobilnummer (muss mit 015, 016 oder 017 beginnen)")

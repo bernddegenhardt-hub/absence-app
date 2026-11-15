@@ -38,7 +38,7 @@ Umgebungsvariablen:
 |------|--------|---------|
 | `/` | Anmelden | nur abgemeldet (sonst Weiterleitung zu `/start`) |
 | `/registrieren` | Registrieren | nur abgemeldet |
-| `/start` | Startseite mit eigenen Daten, Abmelden | nur angemeldet (sonst Weiterleitung zu `/`) |
+| `/start` | Eigene Daten, Abwesenheiten verwalten, Abmelden | nur angemeldet (sonst Weiterleitung zu `/`) |
 
 ## Tests
 
@@ -97,3 +97,32 @@ Beendet die Sitzung serverseitig und löscht das Cookie (204).
 
 ### `GET /api/me`
 Liefert die Daten des angemeldeten Nutzers, sonst 401.
+
+### Abwesenheiten (nur angemeldet, nur die eigenen)
+
+| Methode | Pfad | Zweck |
+|---------|------|-------|
+| `GET` | `/api/absences` | Laufende und geplante, nach Beginn sortiert (`?include_past=true` auch vergangene) |
+| `POST` | `/api/absences` | Neue Abwesenheit (201) |
+| `PUT` | `/api/absences/{id}` | Ändern |
+| `DELETE` | `/api/absences/{id}` | Löschen (204) |
+
+```json
+{
+  "start_date": "2026-12-20",
+  "end_date": "2027-01-03",
+  "location": "Ostsee",
+  "emergency_contact": { "name": "Max Mustermann", "phone": "0171 7654321" },
+  "note": "Familie Meier leert den Briefkasten"
+}
+```
+
+Antworten enthalten zusätzlich `id` und `status` (`geplant`, `aktuell`, `vorbei`).
+
+Regeln:
+- **Von/Bis**: Pflicht; Ende nicht vor Beginn, höchstens ein Jahr, eintägig erlaubt
+- Beginn und Ende dürfen nicht in der Vergangenheit liegen – bei einer laufenden Abwesenheit darf der (vergangene) Beginn aber unverändert bleiben, z. B. um sie zu verlängern
+- Eigene Abwesenheiten dürfen sich nicht überschneiden (409); direkt aneinander anschließend ist erlaubt
+- **Ort**, **Notiz** (max. 100 bzw. 500 Zeichen) und **Notfallkontakt** sind optional; ein Notfallkontakt braucht Name *und* Telefonnummer (Festnetz oder Mobil, wird als `+49…` gespeichert)
+- Vergangene Abwesenheiten können nicht mehr geändert, aber gelöscht werden
+- Fremde Abwesenheiten sind nicht sichtbar und nicht änderbar (404)

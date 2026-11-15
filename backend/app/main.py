@@ -1,4 +1,5 @@
 """Python-API der Nachbarschafts-App."""
+import re
 import sqlite3
 from contextlib import asynccontextmanager
 
@@ -6,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import auth, db
+from . import absences, auth, db
 from .schemas import Address, LoginRequest, RegistrationRequest, UserOut
 from .security import DUMMY_HASH, hash_password, verify_password
 
@@ -18,6 +19,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Nachbarschaft API", lifespan=lifespan)
+app.include_router(absences.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -28,8 +30,18 @@ async def validation_handler(_req: Request, exc: RequestValidationError):
         loc = [str(p) for p in err["loc"] if p != "body"]
         field = ".".join(loc) or "_"
         msg = err["msg"].removeprefix("Value error, ")
+        # Modell-Validatoren melden Feldfehler als "feld: meldung"
+        if m := re.match(r"^(\w+): (.+)$", msg):
+            field = ".".join([*loc, m.group(1)])
+            msg = m.group(2)
         errors.setdefault(field, msg)
     return JSONResponse(status_code=422, content={"detail": "Ungültige Eingaben", "errors": errors})
+
+
+@app.exception_handler(HTTPException)
+async def http_error_handler(_req: Request, exc: HTTPException):
+    content = exc.detail if isinstance(exc.detail, dict) else {"detail": exc.detail}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
 
 
 def _row_to_user(row: sqlite3.Row) -> UserOut:
