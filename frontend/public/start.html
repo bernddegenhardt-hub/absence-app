@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Start – Nachbarschaft</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="card">
+    <div class="topbar">
+      <h1 id="greeting">Hallo!</h1>
+      <button id="logout" class="secondary" type="button">Abmelden</button>
+    </div>
+    <p class="lead">Du bist angemeldet.</p>
+
+    <section class="profile">
+      <h2>Deine Daten</h2>
+      <dl id="profile"></dl>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Meine Abwesenheiten</h2>
+        <button id="new-absence" class="secondary" type="button">+ Neue Abwesenheit</button>
+      </div>
+
+      <form id="absence-form" class="panel" novalidate hidden>
+        <h3 id="form-title">Neue Abwesenheit</h3>
+        <div class="row">
+          <label>Von
+            <input name="start_date" type="date" required>
+            <small class="error" data-for="start_date"></small>
+          </label>
+          <label>Bis
+            <input name="end_date" type="date" required>
+            <small class="error" data-for="end_date"></small>
+          </label>
+        </div>
+        <label>Ort <span class="optional">(optional)</span>
+          <input name="location" maxlength="100" placeholder="z. B. Ostsee, bei Familie in München">
+          <small class="error" data-for="location"></small>
+        </label>
+        <fieldset>
+          <legend>Notfallkontakt <span class="optional">(optional)</span></legend>
+          <div class="row">
+            <label>Name
+              <input name="contact_name" maxlength="100" autocomplete="off">
+              <small class="error" data-for="emergency_contact.name"></small>
+            </label>
+            <label>Telefon
+              <input name="contact_phone" type="tel" autocomplete="off" placeholder="0171 1234567">
+              <small class="error" data-for="emergency_contact.phone"></small>
+            </label>
+          </div>
+          <small class="hint">Wen sollen deine Nachbarn im Notfall anrufen, z. B. bei einem Wasserschaden?</small>
+        </fieldset>
+        <label>Notiz <span class="optional">(optional)</span>
+          <textarea name="note" rows="2" maxlength="500" placeholder="z. B. Briefkasten wird von Familie Meier geleert"></textarea>
+          <small class="error" data-for="note"></small>
+        </label>
+        <div id="form-message" role="alert"></div>
+        <div class="actions">
+          <button type="submit">Speichern</button>
+          <button type="button" id="cancel" class="secondary">Abbrechen</button>
+        </div>
+      </form>
+
+      <p id="empty" class="empty" hidden>Du hast keine geplanten Abwesenheiten.</p>
+      <ul id="absences" class="absences"></ul>
+      <p class="switch"><a href="#" id="toggle-past">Vergangene anzeigen</a></p>
+    </section>
+  </main>
+  <script src="/start.js"></script>
+</body>
+</html>

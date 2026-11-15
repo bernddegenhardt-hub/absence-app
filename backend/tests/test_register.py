@@ -1,31 +1,8 @@
 import pytest
-from fastapi.testclient import TestClient
 
 from app import security
 
-
-@pytest.fixture
-def client(tmp_path, monkeypatch):
-    from app import db
-    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "test.db"))
-    from app.main import app
-    with TestClient(app) as c:
-        yield c
-
-
-def payload(**overrides):
-    data = {
-        "first_name": "Erika",
-        "last_name": "Mustermann",
-        "email": "Erika@Example.de",
-        "password": "geheim123",
-        "address": {"street": "Hauptstraße", "house_number": "12a",
-                    "postal_code": "10115", "city": "Berlin"},
-        "mobile_phone": "0171 / 123 45 67",
-        "birthday": "1985-04-20",
-    }
-    data.update(overrides)
-    return data
+from .conftest import payload
 
 
 def test_password_hashing_without_scrypt(monkeypatch):
@@ -87,3 +64,10 @@ def test_international_mobile(client):
     r = client.post("/api/register", json=payload(mobile_phone="+43 664 1234567"))
     assert r.status_code == 201
     assert r.json()["mobile_phone"] == "+436641234567"
+
+
+def test_register_logs_in(client):
+    client.post("/api/register", json=payload())
+    r = client.get("/api/me")
+    assert r.status_code == 200
+    assert r.json()["email"] == "erika@example.de"

@@ -1,14 +1,15 @@
 """Python-API der Nachbarschafts-App."""
+import re
 import sqlite3
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import db
-from .schemas import Address, RegistrationRequest, UserOut
-from .security import hash_password
+from . import absences, auth, db
+from .schemas import Address, LoginRequest, RegistrationRequest, UserOut
+from .security import DUMMY_HASH, hash_password, verify_password
 
 
 @asynccontextmanager
@@ -18,6 +19,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Nachbarschaft API", lifespan=lifespan)
+app.include_router(absences.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -28,8 +30,18 @@ async def validation_handler(_req: Request, exc: RequestValidationError):
         loc = [str(p) for p in err["loc"] if p != "body"]
         field = ".".join(loc) or "_"
         msg = err["msg"].removeprefix("Value error, ")
+        # Modell-Validatoren melden Feldfehler als "feld: meldung"
+        if m := re.match(r"^(\w+): (.+)$", msg):
+            field = ".".join([*loc, m.group(1)])
+            msg = m.group(2)
         errors.setdefault(field, msg)
     return JSONResponse(status_code=422, content={"detail": "Ungültige Eingaben", "errors": errors})
+
+
+@app.exception_handler(HTTPException)
+async def http_error_handler(_req: Request, exc: HTTPException):
+    content = exc.detail if isinstance(exc.detail, dict) else {"detail": exc.detail}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
 
 
 def _row_to_user(row: sqlite3.Row) -> UserOut:
@@ -54,7 +66,7 @@ def health():
 
 
 @app.post("/api/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def register(data: RegistrationRequest):
+def register(data: RegistrationRequest, response: Response):
     a = data.address
     try:
         with db.connect() as conn:
@@ -67,9 +79,44 @@ def register(data: RegistrationRequest):
                  data.mobile_phone, data.birthday.isoformat() if data.birthday else None),
             )
             row = conn.execute("SELECT * FROM users WHERE id = ?", (cur.lastrowid,)).fetchone()
+            auth.create_session(conn, row["id"], response, remember=False)  # direkt angemeldet
     except sqlite3.IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Diese E-Mail-Adresse ist bereits registriert",
         )
     return _row_to_user(row)
+
+
+INVALID_LOGIN = "E-Mail-Adresse oder Passwort ist falsch"
+
+
+@app.post("/api/login", response_model=UserOut)
+def login(data: LoginRequest, response: Response):
+    with db.connect() as conn:
+        if auth.is_locked(conn, data.email):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.",
+            )
+        row = conn.execute("SELECT * FROM users WHERE email = ?", (data.email,)).fetchone()
+        ok = verify_password(data.password, row["password_hash"] if row else DUMMY_HASH)
+        if not (row and ok):
+            auth.record_failure(conn, data.email)
+            conn.commit()
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_LOGIN)
+        auth.clear_failures(conn, data.email)
+        auth.create_session(conn, row["id"], response, remember=data.remember)
+    return _row_to_user(row)
+
+
+@app.post("/api/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(request: Request, response: Response):
+    auth.delete_session(request, response)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
+@app.get("/api/me", response_model=UserOut)
+def me(user=Depends(auth.current_user)):
+    return _row_to_user(user)

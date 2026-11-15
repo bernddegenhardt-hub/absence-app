@@ -38,3 +38,8 @@ def verify_password(password: str, stored: str) -> bool:
         raise ValueError("Unsupported password hash scheme")
 
     return hmac.compare_digest(check.hex(), digest)
+
+
+# Dummy-Hash, damit eine Anmeldung mit unbekannter E-Mail genauso lange dauert
+# wie mit bekannter (verhindert, dass man registrierte Adressen erraten kann).
+DUMMY_HASH = hash_password("dummy-password-0")
