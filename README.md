@@ -63,4 +63,4 @@ Regeln:
 - **Mobilnummer**: wird ins Format `+49…` umgewandelt; deutsche Nummern müssen mit 015/016/017 beginnen, internationale (`+43…`) sind erlaubt
 - **Adresse**: Straße, Hausnummer, 5-stellige PLZ, Ort – getrennt gespeichert, damit Nachbarn später gefunden werden können
 - **Geburtstag**: optional, muss in der Vergangenheit liegen
-- **Passwort**: mind. 8 Zeichen, Buchstaben und Ziffern; gespeichert als scrypt-Hash
+- **Passwort**: mind. 8 Zeichen, Buchstaben und Ziffern; gespeichert als scrypt-Hash, mit PBKDF2-HMAC-SHA256 als Fallback wenn scrypt nicht verfügbar ist

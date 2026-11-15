@@ -2,6 +2,7 @@
 import os
 import sqlite3
 from contextlib import contextmanager
+from typing import Optional
 
 DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "..", "data.db"))
 
@@ -25,13 +26,13 @@ CREATE INDEX IF NOT EXISTS idx_users_address ON users (postal_code, street);
 """
 
 
-def init_db(path: str | None = None) -> None:
+def init_db(path: Optional[str] = None) -> None:
     with connect(path) as conn:
         conn.executescript(SCHEMA)
 
 
 @contextmanager
-def connect(path: str | None = None):
+def connect(path: Optional[str] = None):
     conn = sqlite3.connect(path or DB_PATH)
     conn.row_factory = sqlite3.Row
     try:

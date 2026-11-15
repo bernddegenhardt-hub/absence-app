@@ -1,6 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app import security
+
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
@@ -24,6 +26,16 @@ def payload(**overrides):
     }
     data.update(overrides)
     return data
+
+
+def test_password_hashing_without_scrypt(monkeypatch):
+    monkeypatch.delattr(security.hashlib, "scrypt", raising=False)
+
+    stored = security.hash_password("geheim123")
+
+    assert stored.startswith("pbkdf2_sha256$")
+    assert security.verify_password("geheim123", stored)
+    assert not security.verify_password("falsch123", stored)
 
 
 def test_register_success(client):

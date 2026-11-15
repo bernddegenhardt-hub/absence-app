@@ -1,6 +1,7 @@
 """Validierung der Registrierungsdaten."""
 import re
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -58,7 +59,7 @@ class RegistrationRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     address: Address
     mobile_phone: str
-    birthday: date | None = None
+    birthday: Optional[date] = None
 
     @field_validator("first_name", "last_name", mode="before")
     @classmethod
@@ -96,7 +97,7 @@ class RegistrationRequest(BaseModel):
 
     @field_validator("birthday")
     @classmethod
-    def check_birthday(cls, v: date | None) -> date | None:
+    def check_birthday(cls, v: Optional[date]) -> Optional[date]:
         if v is None:
             return v
         today = date.today()
@@ -114,5 +115,5 @@ class UserOut(BaseModel):
     email: str
     address: Address
     mobile_phone: str
-    birthday: date | None
+    birthday: Optional[date]
     created_at: str
