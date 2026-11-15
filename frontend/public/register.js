@@ -71,8 +71,8 @@ form.addEventListener("submit", async (e) => {
     });
     const body = await res.json().catch(() => ({}));
     if (res.status === 201) {
-      form.reset();
       setMessage(`Willkommen, ${body.first_name}! Dein Konto wurde erstellt.`, "success");
+      setTimeout(() => location.assign("/start"), 1200);
     } else if (res.status === 422 && body.errors) {
       showErrors(body.errors);
       setMessage("Bitte prüfe die markierten Felder.", "error");

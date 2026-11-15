@@ -107,6 +107,17 @@ class RegistrationRequest(BaseModel):
         return v
 
 
+class LoginRequest(BaseModel):
+    email: str = Field(max_length=254)
+    password: str = Field(max_length=128)
+    remember: bool = False
+
+    @field_validator("email")
+    @classmethod
+    def norm_email(cls, v: str) -> str:
+        return v.strip().lower()
+
+
 class UserOut(BaseModel):
     id: int
     first_name: str

@@ -16,3 +16,8 @@ def verify_password(password: str, stored: str) -> bool:
     _, n, r, p, salt, digest = stored.split("$")
     check = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=int(n), r=int(r), p=int(p))
     return hmac.compare_digest(check.hex(), digest)
+
+
+# Dummy-Hash, damit eine Anmeldung mit unbekannter E-Mail genauso lange dauert
+# wie mit bekannter (verhindert, dass man registrierte Adressen erraten kann).
+DUMMY_HASH = hash_password("dummy-password-0")

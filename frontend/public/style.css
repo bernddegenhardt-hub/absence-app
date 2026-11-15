@@ -34,3 +34,19 @@ button:disabled { opacity: .6; cursor: wait; }
 .msg.success { background: rgba(47,125,91,.15); color: var(--accent); }
 .msg.error { background: rgba(192,57,43,.12); color: var(--error); }
 @media (max-width: 480px) { .row { flex-direction: column; gap: 0; } .row > .narrow { flex: 1; } }
+.narrow-card { max-width: 420px; }
+.switch { text-align: center; margin: 16px 0 0; color: var(--muted); }
+a { color: var(--accent); }
+label.checkbox { display: flex; align-items: center; gap: 8px; }
+label.checkbox input { width: auto; margin: 0; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+button.secondary { width: auto; padding: 8px 14px; background: transparent; color: var(--accent);
+                   border: 1px solid var(--accent); }
+button.secondary:hover { background: rgba(47,125,91,.1); }
+h2 { font-size: 1.1rem; margin: 24px 0 8px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+dt { color: var(--muted); }
+dd { margin: 0; overflow-wrap: anywhere; }
+.placeholder { border: 1px dashed var(--border); border-radius: 8px; padding: 4px 16px; margin-top: 24px; }
+.placeholder h2 { margin-top: 12px; }
+.placeholder p { color: var(--muted); }

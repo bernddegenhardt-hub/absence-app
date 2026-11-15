@@ -28,7 +28,17 @@ npm install
 npm start          # http://localhost:3000
 ```
 
-Umgebungsvariablen: `DB_PATH` (Backend), `PORT` und `API_URL` (Frontend).
+Umgebungsvariablen:
+- Backend: `DB_PATH`, `COOKIE_SECURE=true` (in Produktion mit HTTPS setzen)
+- Frontend: `PORT`, `API_URL`
+
+## Seiten
+
+| Pfad | Inhalt | Zugriff |
+|------|--------|---------|
+| `/` | Anmelden | nur abgemeldet (sonst Weiterleitung zu `/start`) |
+| `/registrieren` | Registrieren | nur abgemeldet |
+| `/start` | Startseite mit eigenen Daten, Abmelden | nur angemeldet (sonst Weiterleitung zu `/`) |
 
 ## Tests
 
@@ -58,9 +68,32 @@ cd backend && python -m pytest
 | 409 | E-Mail-Adresse bereits registriert |
 | 422 | Ungültige Eingaben – `errors` enthält `{feld: meldung}` |
 
+Nach erfolgreicher Registrierung ist man direkt angemeldet.
+
 Regeln:
 - **E-Mail**: gültiges Format, eindeutig (Groß-/Kleinschreibung egal), wird kleingeschrieben gespeichert
 - **Mobilnummer**: wird ins Format `+49…` umgewandelt; deutsche Nummern müssen mit 015/016/017 beginnen, internationale (`+43…`) sind erlaubt
 - **Adresse**: Straße, Hausnummer, 5-stellige PLZ, Ort – getrennt gespeichert, damit Nachbarn später gefunden werden können
 - **Geburtstag**: optional, muss in der Vergangenheit liegen
 - **Passwort**: mind. 8 Zeichen, Buchstaben und Ziffern; gespeichert als scrypt-Hash
+
+### `POST /api/login`
+
+```json
+{ "email": "erika@example.de", "password": "geheim123", "remember": false }
+```
+
+| Status | Bedeutung |
+|--------|-----------|
+| 200 | Angemeldet – setzt das Cookie `session` (HttpOnly, SameSite=Lax) |
+| 401 | E-Mail-Adresse oder Passwort falsch (bewusst ohne Hinweis, was davon) |
+| 429 | Nach 5 Fehlversuchen für diese E-Mail-Adresse 15 Minuten gesperrt |
+
+- Ohne `remember` gilt die Sitzung bis zum Schließen des Browsers (höchstens 12 Stunden), mit `remember` 30 Tage.
+- In der Datenbank wird nur ein SHA-256-Hash des Sitzungs-Tokens gespeichert.
+
+### `POST /api/logout`
+Beendet die Sitzung serverseitig und löscht das Cookie (204).
+
+### `GET /api/me`
+Liefert die Daten des angemeldeten Nutzers, sonst 401.
