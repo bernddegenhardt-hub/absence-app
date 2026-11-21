@@ -19,10 +19,11 @@ label { display: block; margin-bottom: 12px; font-size: .95rem; }
 .row { display: flex; gap: 12px; }
 .row > label { flex: 1; }
 .row > .narrow { flex: 0 0 30%; }
-input, textarea { display: block; width: 100%; margin-top: 4px; padding: 10px 12px; font: inherit;
+input, textarea, select { display: block; width: 100%; margin-top: 4px; padding: 10px 12px; font: inherit;
         color: inherit; background: transparent; border: 1px solid var(--border); border-radius: 8px; }
-input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-input[aria-invalid="true"] { border-color: var(--error); }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--error); }
+select { background: var(--card); }
 .optional, .hint { color: var(--muted); font-size: .85rem; }
 .hint { display: block; margin-top: 4px; }
 .error { display: block; color: var(--error); font-size: .85rem; min-height: 1em; }
@@ -75,3 +76,18 @@ button.link { width: auto; padding: 0; background: none; color: var(--accent); f
 button.link:hover { background: none; }
 button.link.danger { color: var(--error); }
 @media (max-width: 480px) { .section-head { flex-direction: column; align-items: stretch; } }
+
+/* Geburtsdatum: Umschalter Eingabefeld / Auswahlfelder */
+.birthday { margin-bottom: 12px; font-size: .95rem; }
+.birthday-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.segmented { display: inline-flex; border: 1px solid var(--accent); border-radius: 999px; overflow: hidden; }
+.segmented label { margin: 0; font-size: .85rem; cursor: pointer; }
+.segmented input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.segmented span { display: block; padding: 4px 12px; color: var(--accent); }
+.segmented input:checked + span { background: var(--accent); color: #fff; }
+.segmented input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; }
+.birthday .dates { margin-top: 4px; }
+.birthday .dates > label { margin-bottom: 0; }
+.birthday .dates > .grow { flex: 2; }
+/* Tag/Monat/Jahr bleiben auch auf schmalen Bildschirmen nebeneinander */
+@media (max-width: 480px) { .row.dates { flex-direction: row; gap: 8px; } }

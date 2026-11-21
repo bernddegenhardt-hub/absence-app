@@ -24,10 +24,33 @@
             <small class="error" data-for="last_name"></small>
           </label>
         </div>
-        <label>Geburtstag <span class="optional">(optional)</span>
-          <input name="birthday" type="date" autocomplete="bday">
+        <div class="birthday" role="group" aria-labelledby="birthday-label">
+          <div class="birthday-head">
+            <span id="birthday-label">Geburtsdatum <span class="optional">(optional)</span></span>
+            <div class="segmented" role="radiogroup" aria-label="Eingabeart Geburtsdatum">
+              <label><input type="radio" name="birthday_mode" value="text" checked><span>Eingabefeld</span></label>
+              <label><input type="radio" name="birthday_mode" value="select"><span>Auswahlfelder</span></label>
+            </div>
+          </div>
+
+          <div id="birthday-text-view">
+            <input name="birthday_text" aria-label="Geburtsdatum im Format TT.MM.JJJJ" placeholder="TT.MM.JJJJ"
+                   inputmode="numeric" maxlength="10" autocomplete="bday">
+          </div>
+
+          <div id="birthday-select-view" class="row dates" hidden>
+            <label>Tag
+              <select name="birthday_day" autocomplete="bday-day"><option value="">–</option></select>
+            </label>
+            <label class="grow">Monat
+              <select name="birthday_month" autocomplete="bday-month"><option value="">–</option></select>
+            </label>
+            <label>Jahr
+              <select name="birthday_year" autocomplete="bday-year"><option value="">–</option></select>
+            </label>
+          </div>
           <small class="error" data-for="birthday"></small>
-        </label>
+        </div>
       </fieldset>
 
       <fieldset>
@@ -84,6 +107,7 @@
     </form>
     <p class="switch">Schon registriert? <a href="/">Anmelden</a></p>
   </main>
+  <script src="/birthday.js"></script>
   <script src="/register.js"></script>
 </body>
 </html>
