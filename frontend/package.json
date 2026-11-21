@@ -6,10 +6,16 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test:e2e": "node tests/geburtsdatum.e2e.cjs"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.1"
   }
 }

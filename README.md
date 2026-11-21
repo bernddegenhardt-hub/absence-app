@@ -32,6 +32,17 @@ Umgebungsvariablen:
 - Backend: `DB_PATH`, `COOKIE_SECURE=true` (in Produktion mit HTTPS setzen)
 - Frontend: `PORT`, `API_URL`
 
+## Tests
+
+```bash
+# Backend (Unit-/API-Tests)
+cd backend && .venv/bin/python -m pytest
+
+# Frontend (Browser-Tests mit Google Chrome; Backend + Frontend müssen laufen,
+# am besten mit eigener Test-DB, z. B. DB_PATH=/tmp/test.db)
+cd frontend && npm run test:e2e        # optional: BASE=http://localhost:3000
+```
+
 ## Seiten
 
 | Pfad | Inhalt | Zugriff |

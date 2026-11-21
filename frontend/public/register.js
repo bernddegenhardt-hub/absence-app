@@ -3,12 +3,12 @@ const message = document.getElementById("form-message");
 
 function showErrors(errors) {
   form.querySelectorAll(".error").forEach((el) => (el.textContent = ""));
-  form.querySelectorAll("input").forEach((el) => el.removeAttribute("aria-invalid"));
+  form.querySelectorAll("input, select").forEach((el) => el.removeAttribute("aria-invalid"));
   for (const [field, msg] of Object.entries(errors)) {
     const el = form.querySelector(`.error[data-for="${field}"]`);
-    const input = form.querySelector(`[name="${field}"]`);
+    const inputs = field === "birthday" ? Birthday.inputs() : [form.querySelector(`[name="${field}"]`)];
     if (el) el.textContent = msg;
-    if (input) input.setAttribute("aria-invalid", "true");
+    inputs.forEach((input) => input?.setAttribute("aria-invalid", "true"));
   }
 }
 
@@ -26,7 +26,7 @@ function collect() {
     email: v("email"),
     password: fd.get("password"),
     mobile_phone: v("mobile_phone"),
-    birthday: v("birthday") || null,
+    birthday: Birthday.read().value ?? null,
     address: {
       street: v("address.street"),
       house_number: v("address.house_number"),
@@ -49,6 +49,8 @@ function clientValidate(data) {
   if (data.address.postal_code && !/^\d{5}$/.test(data.address.postal_code))
     errors["address.postal_code"] = "5 Ziffern";
   if (!data.password || data.password.length < 8) errors.password = "Mindestens 8 Zeichen";
+  const birthday = Birthday.read();
+  if (birthday.error) errors.birthday = birthday.error;
   if (data.password !== form.password_confirm.value) errors.password_confirm = "Passwörter stimmen nicht überein";
   return errors;
 }
