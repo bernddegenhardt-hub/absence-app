@@ -116,12 +116,12 @@ const Birthday = (() => {
 
   // --- Ergebnis + Validierung ---------------------------------------------
   function validateParts({ d, m, y }) {
-    if (m < 1 || m > 12 || d < 1 || d > daysInMonth(m, y)) return { error: "Dieses Datum gibt es nicht" };
+    if (m < 1 || m > 12 || d < 1 || d > daysInMonth(m, y)) return { error: "Dieses Datum gibt es nicht. Bitte überprüfen Sie die Eingabe." };
     const today = new Date();
     const date = new Date(y, m - 1, d);
     today.setHours(0, 0, 0, 0);
-    if (date >= today) return { error: "Geburtsdatum muss in der Vergangenheit liegen" };
-    if (thisYear - y > MAX_AGE) return { error: "Geburtsdatum ist unplausibel" };
+    if (date >= today) return { error: "Geburtsdatum muss in der Vergangenheit liegen. Bitte überprüfen Sie die Eingabe." };
+    if (thisYear - y > MAX_AGE) return { error: "Geburtsdatum ist unplausibel. Bitte überprüfen Sie die Eingabe." };
     return { value: `${y}-${pad(m)}-${pad(d)}` };
   }
 
