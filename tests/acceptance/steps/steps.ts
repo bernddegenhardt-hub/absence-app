@@ -8,5 +8,5 @@ Given('ich öffne {string}', async ({ page }, url: string) => {
 });
 
 Then('sehe ich den Titel {string}', async ({ page }, titel: string) => {
-  await expect(page).toHaveTitle(new RegExp(titel));
+  await expect(page).toHaveTitle(titel);
 });

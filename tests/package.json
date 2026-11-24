@@ -1,27 +1,17 @@
 {
-  "name": "Acceptance Tests",
+  "name": "acceptance-tests",
   "version": "0.1.0",
   "private": true,
   "description": "Acceptance Tests der Nachbarschafts-App (Abwesenheiten)",
-  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "test:e2e": "node tests/geburtsdatum.e2e.cjs"
+    "test": "bddgen && playwright test"
   },
   "engines": {
-    "node": ">=18"
-  },
-  "dependencies": {
-    "express": "^4.21.2"
+    "node": ">=20"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",
-    "playwright-bdd": "^9.2.1",
-    "playwright-core": "^1.49.1"
-  },
-  "directories": {
-    "test": "bddgen && playwright test"
-  },
-  "keywords": []
+    "playwright-bdd": "^9.2.1"
+  }
 }
