@@ -20,6 +20,8 @@ const FELDER: Record<string, string> = {
   Ort: 'address.city',
   Passwort: 'password',
   'Passwort wiederholen': 'password_confirm',
+  // Fehler-Slot fürs Geburtsdatum; die Eingabefelder heißen birthday_text bzw. birthday_day/_month/_year
+  Geburtsdatum: 'birthday',
 };
 
 function feldName(beschriftung: string) {
@@ -128,6 +130,21 @@ When('ich bei {string} {string} eintrage', async ({ page }, feld: string, wert: 
   if (name === 'password') await page.locator('[name="password_confirm"]').fill(wert);
 });
 
+When('ich als Geburtsdatum {string} eingebe', async ({ page }, datum: string) => {
+  await page.locator('[name="birthday_text"]').fill(datum);
+});
+
+When(
+  'ich als Geburtsdatum Tag {string}, Monat {string} und Jahr {string} auswähle',
+  async ({ page }, tag: string, monat: string, jahr: string) => {
+    await page.getByText('Auswahlfelder', { exact: true }).click();
+    // Erst Jahr und Monat, weil die Tagesliste davon abhängt
+    if (jahr) await page.locator('[name="birthday_year"]').selectOption(jahr);
+    if (monat) await page.locator('[name="birthday_month"]').selectOption({ label: monat });
+    if (tag) await page.locator('[name="birthday_day"]').selectOption(tag);
+  },
+);
+
 When('ich auf {string} klicke', async ({ page }, text: string) => {
   await page
     .getByRole('button', { name: text, exact: true })
@@ -160,7 +177,14 @@ Then('ich sehe die Begrüßung {string}', async ({ page }, text: string) => {
 async function feldfehlerPruefen(page: Page, feld: string, fehler: string) {
   const name = feldName(feld);
   await expect(page.locator(`.error[data-for="${name}"]`)).toHaveText(fehler);
-  await expect(page.locator(`[name="${name}"]`)).toHaveAttribute('aria-invalid', /.*/);
+  // Beim Geburtsdatum werden die gerade sichtbaren Felder markiert (Textfeld oder alle drei Auswahlfelder)
+  const eingaben =
+    name === 'birthday'
+      ? page.locator('[name="birthday_text"]:visible, select[name^="birthday_"]:visible')
+      : page.locator(`[name="${name}"]`);
+  for (const eingabe of await eingaben.all()) {
+    await expect(eingabe).toHaveAttribute('aria-invalid', /.*/);
+  }
 }
 
 // Beide Satzstellungen: "Dann steht beim Feld …" und "Und beim Feld … steht …"
@@ -192,4 +216,10 @@ Then('das Passwortfeld ist leer', async ({ page }) => {
 
 Then('im Profil steht bei {string} {string}', async ({ page }, feld: string, wert: string) => {
   await expect(page.locator('#profile dt', { hasText: feld }).locator('+ dd')).toHaveText(wert);
+});
+
+Then('im Profil steht kein {string}', async ({ page }, feld: string) => {
+  // Erst warten, bis das Profil geladen ist, sonst wäre "fehlt" immer wahr
+  await expect(page.locator('#profile dt', { hasText: 'Name' })).toBeVisible();
+  await expect(page.locator('#profile dt', { hasText: feld })).toHaveCount(0);
 });
