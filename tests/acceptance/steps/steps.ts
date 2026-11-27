@@ -1,4 +1,5 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import type { DataTable } from 'playwright-bdd';
 import { Given, When, Then } from './fixtures';
 
 const SEITEN: Record<string, string> = {
@@ -6,6 +7,26 @@ const SEITEN: Record<string, string> = {
   Registrierungsseite: '/registrieren',
   Startseite: '/start',
 };
+
+// Beschriftung auf der Seite → name-Attribut des Eingabefelds
+const FELDER: Record<string, string> = {
+  Vorname: 'first_name',
+  Nachname: 'last_name',
+  'E-Mail-Adresse': 'email',
+  'Mobile Telefonnummer': 'mobile_phone',
+  Straße: 'address.street',
+  'Hausnr.': 'address.house_number',
+  PLZ: 'address.postal_code',
+  Ort: 'address.city',
+  Passwort: 'password',
+  'Passwort wiederholen': 'password_confirm',
+};
+
+function feldName(beschriftung: string) {
+  const name = FELDER[beschriftung];
+  if (!name) throw new Error(`Unbekanntes Feld "${beschriftung}". Bekannt: ${Object.keys(FELDER).join(', ')}`);
+  return name;
+}
 
 const STANDARD_PASSWORT = 'Geheim123';
 
@@ -70,24 +91,42 @@ When(
   },
 );
 
+async function registrierungAusfuellen(page: Page, d: ReturnType<typeof nutzerdaten>) {
+  const form = page.locator('#register-form');
+  await form.locator('[name="first_name"]').fill(d.first_name);
+  await form.locator('[name="last_name"]').fill(d.last_name);
+  await form.locator('[name="email"]').fill(d.email);
+  await form.locator('[name="mobile_phone"]').fill(d.mobile_phone);
+  await form.locator('[name="address.street"]').fill(d.address.street);
+  await form.locator('[name="address.house_number"]').fill(d.address.house_number);
+  await form.locator('[name="address.postal_code"]').fill(d.address.postal_code);
+  await form.locator('[name="address.city"]').fill(d.address.city);
+  await form.locator('[name="password"]').fill(d.password);
+  await form.locator('[name="password_confirm"]').fill(d.password);
+}
+
 When(
   'ich mich als {string} mit {string} registriere',
   async ({ page, szenario }, name: string, email: string) => {
-    const d = nutzerdaten(name, szenario.email(email));
-    const form = page.locator('#register-form');
-    await form.locator('[name="first_name"]').fill(d.first_name);
-    await form.locator('[name="last_name"]').fill(d.last_name);
-    await form.locator('[name="email"]').fill(d.email);
-    await form.locator('[name="mobile_phone"]').fill(d.mobile_phone);
-    await form.locator('[name="address.street"]').fill(d.address.street);
-    await form.locator('[name="address.house_number"]').fill(d.address.house_number);
-    await form.locator('[name="address.postal_code"]').fill(d.address.postal_code);
-    await form.locator('[name="address.city"]').fill(d.address.city);
-    await form.locator('[name="password"]').fill(d.password);
-    await form.locator('[name="password_confirm"]').fill(d.password);
-    await form.getByRole('button', { name: 'Konto erstellen' }).click();
+    await registrierungAusfuellen(page, nutzerdaten(name, szenario.email(email)));
+    await page.locator('#register-form').getByRole('button', { name: 'Konto erstellen' }).click();
   },
 );
+
+Given(
+  'ich fülle das Registrierungsformular für {string} gültig aus',
+  async ({ page, szenario }, name: string) => {
+    await registrierungAusfuellen(page, nutzerdaten(name, szenario.email(emailAusName(name))));
+  },
+);
+
+When('ich bei {string} {string} eintrage', async ({ page }, feld: string, wert: string) => {
+  const name = feldName(feld);
+  await page.locator(`[name="${name}"]`).fill(wert);
+  // Beim Passwort auch die Wiederholung anpassen, damit nur die Passwortregel greift
+  // und nicht zusätzlich "Passwörter stimmen nicht überein".
+  if (name === 'password') await page.locator('[name="password_confirm"]').fill(wert);
+});
 
 When('ich auf {string} klicke', async ({ page }, text: string) => {
   await page
@@ -118,13 +157,34 @@ Then('ich sehe die Begrüßung {string}', async ({ page }, text: string) => {
   await expect(page.locator('#greeting')).toHaveText(text);
 });
 
+async function feldfehlerPruefen(page: Page, feld: string, fehler: string) {
+  const name = feldName(feld);
+  await expect(page.locator(`.error[data-for="${name}"]`)).toHaveText(fehler);
+  await expect(page.locator(`[name="${name}"]`)).toHaveAttribute('aria-invalid', /.*/);
+}
+
+// Beide Satzstellungen: "Dann steht beim Feld …" und "Und beim Feld … steht …"
+Then('steht beim Feld {string} der Fehler {string}', async ({ page }, feld: string, fehler: string) => {
+  await feldfehlerPruefen(page, feld, fehler);
+});
+Then('beim Feld {string} steht der Fehler {string}', async ({ page }, feld: string, fehler: string) => {
+  await feldfehlerPruefen(page, feld, fehler);
+});
+
 Then(
-  'beim Feld {string} steht der Fehler {string}',
-  async ({ page }, feld: string, fehler: string) => {
-    await expect(page.locator(`.error[data-for="${feld}"]`)).toHaveText(fehler);
-    await expect(page.locator(`[name="${feld}"]`)).toHaveAttribute('aria-invalid', /.*/);
+  'steht bei diesen Feldern der Fehler {string}:',
+  async ({ page }, fehler: string, felder: DataTable) => {
+    for (const [feld] of felder.raw()) await feldfehlerPruefen(page, feld, fehler);
   },
 );
+
+Then('beim Feld {string} steht kein Fehler', async ({ page }, feld: string) => {
+  await expect(page.locator(`.error[data-for="${feldName(feld)}"]`)).toBeEmpty();
+});
+
+Then('ich sehe keine Meldung', async ({ page }) => {
+  await expect(page.locator('#form-message')).toBeEmpty();
+});
 
 Then('das Passwortfeld ist leer', async ({ page }) => {
   await expect(page.locator('[name="password"]')).toHaveValue('');

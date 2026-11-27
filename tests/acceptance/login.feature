@@ -48,3 +48,25 @@ Funktionalität: Anmelden
     Angenommen ich öffne die Anmeldeseite
     Wenn ich auf "Jetzt registrieren" klicke
     Dann bin ich auf der Registrierungsseite
+
+  # ---------- Pflichtfelder ----------
+
+  Szenario: Leeres Anmeldeformular
+    Angenommen ich öffne die Anmeldeseite
+    Wenn ich mich mit "" und Passwort "" anmelde
+    Dann steht beim Feld "E-Mail-Adresse" der Fehler "Bitte E-Mail-Adresse eingeben"
+    Und beim Feld "Passwort" steht der Fehler "Bitte Passwort eingeben"
+    Und ich bin auf der Anmeldeseite
+
+  Szenariogrundriss: Ein Pflichtfeld fehlt bei der Anmeldung
+    Angenommen ich öffne die Anmeldeseite
+    Wenn ich mich mit "<email>" und Passwort "<passwort>" anmelde
+    Dann steht beim Feld "<feld>" der Fehler "<fehler>"
+    Und beim Feld "<anderes Feld>" steht kein Fehler
+    Und ich sehe keine Meldung
+    Und ich bin auf der Anmeldeseite
+
+    Beispiele:
+      | email          | passwort  | feld           | fehler                        | anderes Feld   |
+      |                | Geheim123 | E-Mail-Adresse | Bitte E-Mail-Adresse eingeben | Passwort       |
+      | max@example.de |           | Passwort       | Bitte Passwort eingeben       | E-Mail-Adresse |
