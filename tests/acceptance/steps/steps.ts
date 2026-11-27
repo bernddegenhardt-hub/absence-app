@@ -130,6 +130,35 @@ When('ich bei {string} {string} eintrage', async ({ page }, feld: string, wert: 
   if (name === 'password') await page.locator('[name="password_confirm"]').fill(wert);
 });
 
+When(
+  'ich mich {int}-mal mit {string} und einem falschen Passwort anmelde',
+  async ({ page, szenario }, anzahl: number, email: string) => {
+    const form = page.locator('#login-form');
+    for (let i = 0; i < anzahl; i++) {
+      await form.locator('[name="email"]').fill(szenario.email(email));
+      await form.locator('[name="password"]').fill('Falsch123');
+      // Auf die Antwort warten, damit jeder Versuch wirklich beim Server ankommt und gezählt wird
+      const [antwort] = await Promise.all([
+        page.waitForResponse((r) => r.url().endsWith('/api/login')),
+        form.getByRole('button', { name: 'Anmelden' }).click(),
+      ]);
+      expect(antwort.status(), `Fehlversuch ${i + 1}`).toBe(401);
+    }
+  },
+);
+
+When('ich {string} ankreuze', async ({ page }, beschriftung: string) => {
+  await page.getByLabel(beschriftung).check();
+});
+
+// Ein Browser-Neustart verwirft alle Cookies ohne Ablaufdatum (Sitzungs-Cookies)
+// und behält nur die mit Ablaufdatum.
+When('ich den Browser schließe und wieder öffne', async ({ context }) => {
+  const bleibende = (await context.cookies()).filter((c) => c.expires > 0);
+  await context.clearCookies();
+  await context.addCookies(bleibende);
+});
+
 When('ich als Geburtsdatum {string} eingebe', async ({ page }, datum: string) => {
   await page.locator('[name="birthday_text"]').fill(datum);
 });
@@ -216,6 +245,14 @@ Then('das Passwortfeld ist leer', async ({ page }) => {
 
 Then('im Profil steht bei {string} {string}', async ({ page }, feld: string, wert: string) => {
   await expect(page.locator('#profile dt', { hasText: feld }).locator('+ dd')).toHaveText(wert);
+});
+
+Then('die Anmeldung ist {int} Tage gültig', async ({ context }, tage: number) => {
+  const cookie = (await context.cookies()).find((c) => c.name === 'session');
+  expect(cookie, 'Sitzungs-Cookie "session"').toBeDefined();
+  const erwartet = Date.now() / 1000 + tage * 24 * 60 * 60;
+  // 5 Minuten Spielraum für die Laufzeit des Tests
+  expect(Math.abs(cookie!.expires - erwartet)).toBeLessThan(5 * 60);
 });
 
 Then('im Profil steht kein {string}', async ({ page }, feld: string) => {
