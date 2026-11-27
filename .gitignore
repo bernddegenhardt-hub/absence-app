@@ -3,3 +3,9 @@ __pycache__/
 .pytest_cache/
 *.db
 .venv/
+
+# Playwright / playwright-bdd
+.features-gen/
+test-results/
+playwright-report/
+.test-data/

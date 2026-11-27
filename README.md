@@ -41,6 +41,12 @@ cd backend && .venv/bin/python -m pytest
 # Frontend (Browser-Tests mit Google Chrome; Backend + Frontend müssen laufen,
 # am besten mit eigener Test-DB, z. B. DB_PATH=/tmp/test.db)
 cd frontend && npm run test:e2e        # optional: BASE=http://localhost:3000
+
+# Acceptance-Tests (BDD, Gherkin in tests/acceptance/*.feature)
+# Startet Backend (:8001) und Frontend (:3001) selbst, mit leerer Test-DB
+# unter tests/.test-data/ – laufende Entwicklungsserver und data.db bleiben unberührt.
+cd tests && npm install && npx playwright install chromium   # einmalig
+cd tests && npm test
 ```
 
 ## Seiten

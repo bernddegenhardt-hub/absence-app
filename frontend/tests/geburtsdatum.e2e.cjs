@@ -32,7 +32,6 @@ function eq(actual, expected, label = "") {
 }
 
 const sel = (page) => Promise.all(["day", "month", "year"].map((k) => page.inputValue(`[name=birthday_${k}]`)));
-const err = (page) => page.textContent('.error[data-for="birthday"]');
 const toSelect = (page) => page.click("text=Auswahlfelder");
 const toText = (page) => page.click("text=Eingabefeld");
 let n = 0;
@@ -59,14 +58,6 @@ async function submitAndGetUser(page) {
   eq(res.status(), 201, "HTTP-Status");
   const me = await page.request.get(`${BASE}/api/me`);
   return me.json();
-}
-
-async function submitExpectingNoRequest(page) {
-  let sent = false;
-  page.on("request", (r) => { if (r.url().endsWith("/api/register")) sent = true; });
-  await page.click("button[type=submit]");
-  await page.waitForTimeout(300);
-  if (sent) throw new Error("Formular wurde trotz Fehler abgeschickt");
 }
 
 (async () => {
@@ -182,74 +173,9 @@ async function submitExpectingNoRequest(page) {
     eq(await page.isVisible("[name=birthday_text]"), true, "Text nach Reload");
   });
 
-  // --- Validierung im Browser ---------------------------------------------
-  const nextYear = new Date().getFullYear() + 1;
-  const invalidText = [
-    ["12.3", "Bitte im Format TT.MM.JJJJ eingeben"],
-    ["1.2.85", "Bitte im Format TT.MM.JJJJ eingeben"],
-    ["abc", "Bitte im Format TT.MM.JJJJ eingeben"],
-    ["31.02.1990", "Dieses Datum gibt es nicht"],
-    ["29.02.2001", "Dieses Datum gibt es nicht"],
-    ["15.13.1990", "Dieses Datum gibt es nicht"],
-    [`01.01.${nextYear}`, "Geburtsdatum muss in der Vergangenheit liegen"],
-    ["01.01.1800", "Geburtsdatum ist unplausibel"],
-  ];
-  for (const [input, msg] of invalidText) {
-    await test(`Validierung Text "${input}" → „${msg}“, kein Absenden`, async (page) => {
-      await fillRequired(page);
-      await page.fill("[name=birthday_text]", input);
-      await submitExpectingNoRequest(page);
-      eq(await err(page), msg);
-      eq(await page.getAttribute("[name=birthday_text]", "aria-invalid"), "true", "rote Markierung");
-    });
-  }
-
-  await test("Validierung Auswahl unvollständig → Fehler + alle drei markiert, kein Absenden", async (page) => {
-    await fillRequired(page);
-    await toSelect(page);
-    await page.selectOption("[name=birthday_day]", "5");
-    await submitExpectingNoRequest(page);
-    eq(await err(page), "Bitte Tag, Monat und Jahr vollständig angeben");
-    for (const k of ["day", "month", "year"])
-      eq(await page.getAttribute(`[name=birthday_${k}]`, "aria-invalid"), "true", k);
-  });
-
-  await test("Fehlermarkierung verschwindet nach Korrektur", async (page) => {
-    await fillRequired(page);
-    await page.fill("[name=birthday_text]", "31.02.1990");
-    await submitExpectingNoRequest(page);
-    await page.fill("[name=birthday_text]", "28.02.1990");
-    await submitAndGetUser(page);
-    eq(await page.getAttribute("[name=birthday_text]", "aria-invalid"), null);
-  });
-
-  // --- Registrierung Ende-zu-Ende -----------------------------------------
-  await test("Registrierung mit Geburtsdatum per Textfeld → gespeichert als 1985-04-20", async (page) => {
-    await fillRequired(page);
-    await page.type("[name=birthday_text]", "20041985");
-    eq((await submitAndGetUser(page)).birthday, "1985-04-20");
-  });
-
-  await test("Registrierung mit eingefügtem \"20041985\" (ohne Punkte) → 1985-04-20", async (page) => {
-    await fillRequired(page);
-    await page.fill("[name=birthday_text]", "20041985");
-    eq((await submitAndGetUser(page)).birthday, "1985-04-20");
-  });
-
-  await test("Registrierung mit Geburtsdatum per Auswahlfeldern → gespeichert als 1990-03-05", async (page) => {
-    await fillRequired(page);
-    await toSelect(page);
-    await page.selectOption("[name=birthday_year]", "1990");
-    await page.selectOption("[name=birthday_month]", "3");
-    await page.selectOption("[name=birthday_day]", "5");
-    eq((await submitAndGetUser(page)).birthday, "1990-03-05");
-  });
-
-  await test("Registrierung ohne Geburtsdatum (Textansicht) → null", async (page) => {
-    await fillRequired(page);
-    eq((await submitAndGetUser(page)).birthday, null);
-  });
-
+  // --- Welche Ansicht zählt beim Absenden ----------------------------------
+  // Fachliche Fälle (gültige/ungültige Daten, Anzeige im Profil) prüft
+  // tests/acceptance/geburtsdatum.feature.
   await test("Registrierung ohne Geburtsdatum (Auswahlansicht) → null", async (page) => {
     await fillRequired(page);
     await toSelect(page);
@@ -262,13 +188,6 @@ async function submitExpectingNoRequest(page) {
     await toSelect(page);
     for (const k of ["day", "month", "year"]) await page.selectOption(`[name=birthday_${k}]`, "");
     eq((await submitAndGetUser(page)).birthday, null);
-  });
-
-  await test("Nach erfolgreicher Registrierung Weiterleitung zu /start", async (page) => {
-    await fillRequired(page);
-    await page.fill("[name=birthday_text]", "01.06.1970");
-    await submitAndGetUser(page);
-    await page.waitForURL("**/start", { timeout: 5000 });
   });
 
   // --- Bedienbarkeit -------------------------------------------------------
